@@ -1,8 +1,15 @@
 require('dotenv').config();
 
+const fs = require('fs')
+const key = fs.readFileSync('/home/hitarth/key.pem');
+const cert = fs.readFileSync('/home/hitarth/cert.pem');
+
+
 var express = require('express');
 var app = express();
-var server = require('http').createServer(app);
+var https = require('https');
+// var server = require('http').createServer(app);
+var server = https.createServer({key: key, cert: cert}, app)
 var io = require('socket.io').listen(server);
 users = [];
 connections = [];
@@ -15,10 +22,10 @@ DM_API_KEY = process.env.DM_API_KEY;
 
 // Set given room for url parameter
 var given_room = ""
-
+console.log('Directory name is '+__dirname)
 app.use(express.static(__dirname + '/'));
 
-server.listen(process.env.PORT || 3000);
+server.listen(process.env.PORT || 3000, '0.0.0.0');
 console.log('Server Started . . .');
 
 
@@ -32,6 +39,7 @@ console.log('Server Started . . .');
 
 app.get('/:room', function(req, res) {
     given_room = req.params.room
+    console.log('Room number recived in request '+given_room)
     res.sendFile(__dirname + '/index.html');
 });
 
@@ -53,6 +61,61 @@ io.on('connection', function(socket) {
 var roomno = 1;
 
 io.sockets.on('connection', function(socket) {
+
+    socket.on('join-room', (roomId, videoUserId) => {
+        socket.join(roomId)
+        socket.to(roomId).broadcast.emit('user-connected', videoUserId)
+
+        // Disconnect
+        socket.on('disconnect', function(data) {
+            // If socket username is found
+            if (users.indexOf(socket.username) != -1) {
+                users.splice((users.indexOf(socket.username)), 1);
+                updateUsernames();
+            }
+
+            connections.splice(connections.indexOf(socket), 1);
+            console.log(socket.id + ' Disconnected: %s sockets connected', connections.length);
+            // console.log(io.sockets.adapter.rooms['room-' + socket.roomnum])
+            // console.log(socket.roomnum)
+
+            // Meant for video call
+            socket.to(roomId).broadcast.emit('user-disconnected', videoUserId)
+
+            // HOST DISCONNECT
+            // Need to check if current socket is the host of the roomnum
+            // If it is the host, needs to auto assign to another socket in the room
+
+            // Grabs room from userrooms data structure
+            var id = socket.id
+            var roomnum = userrooms[id]
+            var room = io.sockets.adapter.rooms['room-' + roomnum]
+
+            // If you are not the last socket to leave
+            if (room !== undefined) {
+                // If you are the host
+                if (socket.id == room.host) {
+                    // Reassign
+                    console.log("hello i am the host " + socket.id + " and i am leaving my responsibilities to " + Object.keys(room.sockets)[0])
+                    io.to(Object.keys(room.sockets)[0]).emit('autoHost', {
+                        roomnum: roomnum
+                    })
+                }
+
+                // Remove from users list
+                // If socket username is found
+                if (room.users.indexOf(socket.username) != -1) {
+                    room.users.splice((room.users.indexOf(socket.username)), 1);
+                    updateRoomUsers(roomnum);
+                }
+            }
+
+            // Delete socket from userrooms
+            delete userrooms[id]
+
+        });
+    })
+
     // Connect Socket
     connections.push(socket);
     console.log('Connected: %s sockets connected', connections.length);
@@ -74,54 +137,6 @@ io.sockets.on('connection', function(socket) {
     // Workaround because middleware was not working right
     socket.on('reset url', function(data) {
         given_room = ""
-    });
-
-    // Disconnect
-    socket.on('disconnect', function(data) {
-
-        // If socket username is found
-        if (users.indexOf(socket.username) != -1) {
-            users.splice((users.indexOf(socket.username)), 1);
-            updateUsernames();
-        }
-
-        connections.splice(connections.indexOf(socket), 1);
-        console.log(socket.id + ' Disconnected: %s sockets connected', connections.length);
-        // console.log(io.sockets.adapter.rooms['room-' + socket.roomnum])
-        // console.log(socket.roomnum)
-
-
-        // HOST DISCONNECT
-        // Need to check if current socket is the host of the roomnum
-        // If it is the host, needs to auto assign to another socket in the room
-
-        // Grabs room from userrooms data structure
-        var id = socket.id
-        var roomnum = userrooms[id]
-        var room = io.sockets.adapter.rooms['room-' + roomnum]
-
-        // If you are not the last socket to leave
-        if (room !== undefined) {
-            // If you are the host
-            if (socket.id == room.host) {
-                // Reassign
-                console.log("hello i am the host " + socket.id + " and i am leaving my responsibilities to " + Object.keys(room.sockets)[0])
-                io.to(Object.keys(room.sockets)[0]).emit('autoHost', {
-                    roomnum: roomnum
-                })
-            }
-
-            // Remove from users list
-            // If socket username is found
-            if (room.users.indexOf(socket.username) != -1) {
-                room.users.splice((room.users.indexOf(socket.username)), 1);
-                updateRoomUsers(roomnum);
-            }
-        }
-
-        // Delete socket from userrooms
-        delete userrooms[id]
-
     });
 
     // ------------------------------------------------------------------------
@@ -176,7 +191,8 @@ io.sockets.on('connection', function(socket) {
             io.sockets.adapter.rooms['room-' + socket.roomnum].currPlayer = 0
             // Default video
             io.sockets.adapter.rooms['room-' + socket.roomnum].currVideo = {
-                yt: 'M7lc1UVf-VE',
+                // yt: 'M7lc1UVf-VE',
+                yt: 'c7QYEedjb_o',
                 dm: 'x26m1j4',
                 vimeo: '76979871',
                 html5: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'
@@ -184,7 +200,8 @@ io.sockets.on('connection', function(socket) {
             // Previous Video
             io.sockets.adapter.rooms['room-' + socket.roomnum].prevVideo = {
                 yt: {
-                    id: 'M7lc1UVf-VE',
+                    // id: 'M7lc1UVf-VE',
+                    id: 'c7QYEedjb_o',
                     time: 0
                 },
                 dm: {

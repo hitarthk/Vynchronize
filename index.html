@@ -301,30 +301,32 @@
                     <!-- </div> -->
                     <!-- </div> -->
 
-                    <div id="messageArea" class="row">
-                        <br/>
-                        <!-- <h2 style="color:gray">Chat</h2> -->
-                        <div class="col-md-12">
-                            <div class="chat noscrollbar" id="chat"></div>
-                            <!-- Message Form (Enter Message) -->
-                            <form id="messageForm">
-                                <div class="form-group">
-                                    <br/>
-                                    <!-- <label>Enter Message...</label> -->
-                                    <input class="form-control chat-form" id="message" placeholder="Enter Message..." />
-                                    <!-- <textarea class="form-control" id="message"></textarea> -->
-                                    <br />
-                                    <!-- <input type="submit" class="btn btn-primary" value="Send Message" /> -->
-                                    <br />
-                                </div>
-                            </form>
-                        </div>
-                    </div>
+<!--                    <div id="messageArea" class="row">-->
+<!--                        <br/>-->
+<!--                        &lt;!&ndash; <h2 style="color:gray">Chat</h2> &ndash;&gt;-->
+<!--                        <div class="col-md-12">-->
+<!--                            <div class="chat noscrollbar" id="chat"></div>-->
+<!--                            &lt;!&ndash; Message Form (Enter Message) &ndash;&gt;-->
+<!--                            <form id="messageForm">-->
+<!--                                <div class="form-group">-->
+<!--                                    <br/>-->
+<!--                                    &lt;!&ndash; <label>Enter Message...</label> &ndash;&gt;-->
+<!--                                    <input class="form-control chat-form" id="message" placeholder="Enter Message..." />-->
+<!--                                    &lt;!&ndash; <textarea class="form-control" id="message"></textarea> &ndash;&gt;-->
+<!--                                    <br />-->
+<!--                                    &lt;!&ndash; <input type="submit" class="btn btn-primary" value="Send Message" /> &ndash;&gt;-->
+<!--                                    <br />-->
+<!--                                </div>-->
+<!--                            </form>-->
+<!--                        </div>-->
+<!--                    </div>-->
+
+                    <div id="video-grid"></div>
                 </div>
                 <!-- /.col-md-4 -->
             </div>
 
-            <div id="video-grid"></div>
+
 
             <!-- /.row -->
 
@@ -565,6 +567,7 @@
                             document.getElementById("inv_input").value = "vynchronize.herokuapp.com/" + roomnum
                             history.pushState('', 'Vynchronize', roomnum);
 
+                            setup_video_call($roomnum.val())
                         }
                     });
                     // Join room
@@ -749,7 +752,7 @@
     <script src="js/events.js"></script>
     <script src="js/notify.js"></script>
     <script defer src="https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js"></script>
-<!--    <script defer src="js/video_call.js"></script>-->
+    <script defer src="js/video_call.js"></script>
 
     <!-- Youtube -->
     <script src="js/yt.js"></script>
